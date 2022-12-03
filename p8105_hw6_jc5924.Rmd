@@ -85,7 +85,23 @@ The point of this is not to say you should always use the bootstrap -- it's poss
 #### Tidy the data
 ```{r}
 homicides=read_csv("./data/homicide-data.csv")
+homicides_summary=homicides %>% 
+  janitor::clean_names() %>% 
+  mutate(city_state=str_c(city,state,sep = ", "),
+         victim_age=as.numeric(victim_age),
+         status=case_when(disposition=="Closed by arrest"~1,
+                          disposition=="Closed without arrest"~0,
+                          disposition=="Open/No arrest"~0),
+         victim_sex=fct_relevel(victim_sex,"Female")) %>% 
+  filter(!city_state %in% c("Dallas_TX","Phoenix_AZ","Kansas City_MO","Tulsa_AL"), 
+         victim_race %in% c("Black", "White")) %>% 
+  select(city_state,everything())
 ```
+#### logistic regression
+```{r}
+
+```
+
 
 
 
