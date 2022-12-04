@@ -143,6 +143,7 @@ odds_ratio_plot = cities_glm %>%
     title = "Plot of Estimates Odds Ratio and CIs",
     x = "City, State",
     y = "Odds Ratio") 
+odds_ratio_plot
 ```
 * We can tell from the plot that most of the cities have an odds ratio that is lower than 1 which means with adjusted age and race, the odds of resolved homicides among males is lower than the odds of resolved homicides among females. And some of the cities have odds ratio that are higher than 1 which means that with adjusted age and race, the odds of resolved homicides among males is higher than the odds of resolved homicides among females.
 
@@ -155,5 +156,53 @@ bw_summary=bw %>%
          frace = as.factor(frace),
          malform = as.factor(malform),
          mrace = as.factor(mrace)) 
+sum(is.na(bw_summary))
 ```
+#### residual plot
+```{r}
+stepwise_model = step(lm(bwt ~ . ,data = bw_summary), direction = "both", trace = FALSE) 
+
+plot =
+  bw_summary %>% 
+  add_predictions(stepwise_model) %>% 
+  add_residuals(stepwise_model) %>% 
+  ggplot(aes(x = pred, y = resid)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(formula = 'y ~ x',method = "lm", se = FALSE) +
+  labs(title = "Predicted V Residuals",
+       x = "Fitted", 
+       y = "Residual",)
+plot
+```
+* We can tell from the plot that there is a cluster of points around 2000- 4000 and other points are evently distributed around 0.
+
+#### Model 2&3
+```{r m2&3}
+m2 = lm(bwt ~ blength + gaweeks, data = bw_summary)
+m3 = lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = bw_summary)
+```
+
+####
+```{r cv}
+bw_df= crossv_mc(bw_summary, 100) %>% 
+  mutate(train = map(train, as_tibble),
+         test = map(test, as_tibble)) %>% 
+  mutate(m1_cv = map(train, ~lm(bwt ~ wtgain, data = .x)),
+         m2_cv = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+         m3_cv = map(train, ~lm(bwt ~ bhead + blength + babysex + bhead*blength + bhead*babysex + blength*babysex + bhead*blength*babysex, data = .x))) %>% 
+  mutate(rmse_m1 = map2_dbl(m1_cv, test, ~rmse(model = .x, data = .y)),
+         rmse_m2 = map2_dbl(m2_cv, test, ~rmse(model = .x, data = .y)), 
+         rmse_m3 = map2_dbl(m3_cv, test, ~rmse(model = .x, data = .y)))
+bw_plot = bw_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(everything(), 
+               names_to = "model",
+               values_to = "rmse",
+               names_prefix = "rmse_") %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+bw_plot
+```
+
+
+
 
