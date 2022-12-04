@@ -202,6 +202,7 @@ bw_plot = bw_df %>%
   ggplot(aes(x = model, y = rmse)) + geom_violin()
 bw_plot
 ```
+* According to the plot, we can tell that comparing to model 1, model 3 has relatively the low RMSE and model 1 has a relatively large RMSE. Model 3 is preferred since it has the smallest RMSE.
 
 
 
