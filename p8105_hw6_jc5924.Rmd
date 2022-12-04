@@ -92,16 +92,19 @@ homicides_summary=homicides %>%
          status=case_when(disposition=="Closed by arrest"~1,
                           disposition=="Closed without arrest"~0,
                           disposition=="Open/No arrest"~0),
-         victim_sex=fct_relevel(victim_sex,"Female")) %>% 
+         victim_sex=fct_relevel(victim_sex,"Female"),
+         victim_race=fct_relevel(victim_race,"White")) %>% 
   filter(!city_state %in% c("Dallas_TX","Phoenix_AZ","Kansas City_MO","Tulsa_AL"), 
          victim_race %in% c("Black", "White")) %>% 
-  select(city_state,everything())
+  select(city_state,status, victim_age, victim_sex, victim_race)
 ```
 #### glm
 ```{r}
 baltimore_df=homicides_summary %>% 
-  filter(city_state == "Baltimore, MD") %>% 
-  glm(status~victim_age + victim_sex + victim_race,family=binomial(), data = .) %>% 
+  filter(city_state == "Baltimore, MD")
+
+baltimore_glm=baltimore_df %>% 
+  glm(status~victim_age+victim_sex+victim_race,family=binomial(), data = .) %>% 
   broom::tidy() %>% 
   filter(term == "victim_sexMale") %>%
   mutate(odds_ratio = exp(estimate),
@@ -109,9 +112,26 @@ baltimore_df=homicides_summary %>%
          CI_high=exp(estimate+1.96*std.error)) %>%
   select(term, odds_ratio,CI_low,CI_high) %>% 
   knitr::kable(digit = 3)
+
+baltimore_glm
 ```
 
 #### `glm` for each of the cities
+```{r}
+cities_glm = 
+  homicides_summary %>% 
+  nest(data=-city_state) %>% 
+  mutate(models = map(.x = data, ~ glm(resolved ~ victim_age + victim_race + victim_sex,family = binomial(),data = .x)),
+         results = map(models, broom::tidy)) %>% 
+  unnest(results) %>% 
+  filter(term == "victim_sexMale") %>% 
+  mutate(odds_ratio = exp(estimate),
+         CI_low=exp(estimate - 1.96*std.error),
+         CI_high=exp(estimate + 1.96*std.error)) %>% 
+  select(city_state, odds_ratio,CI_low,CI_high) %>% 
+  knitr::kable(digit = 3)
+```
+
 
 
 
