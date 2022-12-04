@@ -107,7 +107,6 @@ baltimore= homicides_summary %>%
   filter(city_state == "Baltimore_MD") %>% 
   glm(resolved ~ victim_age + victim_sex + victim_race, family = binomial(), data = .) %>% 
   broom::tidy()
-baltimore_glm
 
 baltimore_glm=baltimore %>% 
   mutate(odds_ratio = exp(estimate),
@@ -146,4 +145,15 @@ odds_ratio_plot = cities_glm %>%
     y = "Odds Ratio") 
 ```
 * We can tell from the plot that most of the cities have an odds ratio that is lower than 1 which means with adjusted age and race, the odds of resolved homicides among males is lower than the odds of resolved homicides among females. And some of the cities have odds ratio that are higher than 1 which means that with adjusted age and race, the odds of resolved homicides among males is higher than the odds of resolved homicides among females.
+
+### Problem 3
+#### tidy
+```{r}
+bw=read_csv("./data/birthweight.csv")
+bw_summary=bw %>% 
+  mutate(babysex = as.factor(babysex),
+         frace = as.factor(frace),
+         malform = as.factor(malform),
+         mrace = as.factor(mrace)) 
+```
 
